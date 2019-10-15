@@ -1,4 +1,4 @@
-import { Component, OnInit, OnChanges, AfterViewInit, ViewChild, Input, SimpleChanges, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnChanges, AfterViewInit, ViewChild, Input, SimpleChanges, Output, EventEmitter, ElementRef } from '@angular/core';
 import { DataTableFilter } from './models/datatable-filter.model';
 import { RList } from './models/response-list.model';
 import { IDataTableRender } from './models/datatable-render.model';
@@ -120,11 +120,81 @@ export class UiDatatableComponent implements OnInit, OnChanges, AfterViewInit {
 
   public draw() {
     try {
+      if (this._data == null || this.data.isEmpty) {
+        const tbody = this.tableElement.querySelector('tbody');
+        if (tbody !== null) {
+          tbody.innerHTML = `<tr><td>Dados indisponiveis</td></tr>`;
+        } else {
+          const tbody: HTMLTableSectionElement = this.tableElement.createTBody();
+          tbody.innerHTML = `<tr><td>Dados indisponiveis</td></tr>`;
+        }
+      }
 
+      if (this._data !== null) {
+        if (this._data.isNotEmpty) {
+
+          let tBody: HTMLTableSectionElement;
+
+          if (this.tableElement.querySelector('tbody') === null) {
+            this.tableElement.innerHTML = '';
+            this.tableElement.createTBody();
+          } else {
+            this.tableElement.querySelector('tbody').innerHTML = '';
+            tBody = this.tableElement.querySelector('tbody');
+          }
+
+          if (this._isTitlesRendered) {
+            this._isTitlesRendered = true;
+            this.tableElement.createTHead();
+            const tableHeaderRow = this.tableElement.tHead.insertRow(-1);
+
+            if (this._showCheckboxToSelectRow) {
+              const th = document.createElement('th') as HTMLTableHeaderCellElement;
+              th.style.setProperty('text-align', 'left');
+              th.attributes['class'] = "datatable-first-col";
+              
+              const label = document.createElement('label') as HTMLLabelElement;
+              label.classList.add("pure-material-checkbox");
+              
+              const input = new HTMLInputElement();
+              //input.type = "checkbox";
+              input.onclick()
+                
+                onClick.listen(onSelectAll);
+              const span = Element.tag('span');
+              
+              label.append(input);
+              label.append(span);
+              th.append(label);
+              
+              tableHeaderRow.insertAdjacentElement('beforeend', th);
+            }
+
+          }
+
+
+        }
+      }
     } catch (e) {
       console.error(e);
     }
     this.isLoading = false;
+  }
+
+  onSelectAll(event) {
+    const cbs = this.tableElement.querySelectorAll('input[cbselect=true]');
+    if (event.target.checked) {
+      for (const item: HTMLInputElement in cbs) {
+        item.checked = true;
+      }
+      this.selectedItems.clear();
+      this.selectedItems.addAll(this._data);
+    } else {
+      selectedItems.clear();
+      for (CheckboxInputElement item in cbs) {
+        item.checked = false;
+      }
+    }
   }
 
   public onSearch() {
