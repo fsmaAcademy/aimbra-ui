@@ -17,6 +17,14 @@
     "lib": [
       "es2018",
       "dom"
-    ]
+    ],
+    "paths": {
+      "ui-datatable": [
+        "dist/ui-datatable"
+      ],
+      "ui-datatable/*": [
+        "dist/ui-datatable/*"
+      ]
+    }
   }
 }
