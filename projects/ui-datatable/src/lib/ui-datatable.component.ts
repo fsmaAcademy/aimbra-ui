@@ -4,6 +4,9 @@ import { RList } from './models/response-list.model';
 import { IDataTableRender } from './models/datatable-render.model';
 import { PaginationType } from './models/pagination-type.model';
 import { KeyCode } from './utils/keycode.model';
+import { DataTableRow } from './models/datatable-row.model';
+import { DataTableColumn } from './models/datatable-column.model';
+import { Element } from './utils/element';
 
 @Component({
   selector: 'ui-datatable',
@@ -149,27 +152,72 @@ export class UiDatatableComponent implements OnInit, OnChanges, AfterViewInit {
             const tableHeaderRow = this.tableElement.tHead.insertRow(-1);
 
             if (this._showCheckboxToSelectRow) {
-              const th = document.createElement('th') as HTMLTableHeaderCellElement;
+              const th = Element.tag('th') as HTMLTableHeaderCellElement;
               th.style.setProperty('text-align', 'left');
               th.attributes['class'] = "datatable-first-col";
               
-              const label = document.createElement('label') as HTMLLabelElement;
-              label.classList.add("pure-material-checkbox");
+              const label = Element.tag('label') as HTMLLabelElement;
+              label.classList.add('pure-material-checkbox');
               
               const input = new HTMLInputElement();
               //input.type = "checkbox";
-              input.onclick()
-                
-                onClick.listen(onSelectAll);
-              const span = Element.tag('span');
+              input.addEventListener('onclick', this.onSelectAll);
+              const span = Element.tag('span') as HTMLSpanElement;
               
-              label.append(input);
+              label.append(input)
               label.append(span);
               th.append(label);
               
               tableHeaderRow.insertAdjacentElement('beforeend', th);
             }
 
+            const columnsTitles: DataTableRow = this._data[0].getRowDefinition();
+            columnsTitles.getSets().forEach((col: DataTableColumn) => {
+              const th = Element.tag('th');
+              th.style.setProperty('text-align', 'left');
+              th.attributes['class'] = 'dataTableSorting';
+              th.textContent = col.title;
+
+              th.addEventListener('onclick', e => {
+                if (this.enableOrdering === true) {
+                  this.tableElement.querySelectorAll('th:not(.datatable-first-col)').forEach((el) => {
+                    el.attributes['class'] = 'dataTableSorting';
+                  });
+                  if (this._orderDir === 'asc') {
+                    this._orderDir = 'desc';
+                    th.attributes['class'] = 'dataTableSorting dataTableSortingDesc';
+                  } else if (this._orderDir === 'desc') {
+                    this._orderDir = 'asc';
+                    th.attributes['class'] = 'dataTableSorting dataTableSortingAsc';
+                  }
+
+                  this.dataTableFilter.orderBy = col.key;
+                  this.dataTableFilter.orderDir = this._orderDir;
+                  this.onRequestData();
+                }
+              });
+              
+              tableHeaderRow.insertAdjacentElement('afterend', th);
+            });
+
+          }
+
+          for (const item in this._data) {
+            const tableRow: HTMLTableRowElement = tBody.insertRow(-1);
+            if (this._showCheckboxToSelectRow) {
+              const tdcb = Element.tag('td') as HTMLTableDataCellElement;
+              tdcb.attributes['class'] = 'datatable-first-col';
+              const label = Element.tag('label') as HTMLLabelElement;
+              label.addEventListener('onclick', (e) => {
+                e.stopPropagation();
+              });
+              label.classList.add('pure-material-checkbox');
+              const input = new HTMLInputElement();
+              input.attributes['cbSelect'] = 'true';
+              input.addEventListener('onclick', (ev: MouseEvent) => {
+                this.onsel
+              });
+            }
           }
 
 
@@ -241,6 +289,20 @@ export class UiDatatableComponent implements OnInit, OnChanges, AfterViewInit {
   public numPages(): number {
     const totalPages = Math.ceil(this.totalRecords / this.dataTableFilter.limit);
     return totalPages;
+  }
+
+  onSelect(event: MouseEvent, item: IDataTableRender) {
+    event.stopPropagation();
+    let cb: HTMLInputElement = event.target;
+    if (cb.checked) {
+      if (selectedItems.contains(item) == false) {
+        selectedItems.add(item);
+      }
+    } else {
+      if (selectedItems.contains(item)) {
+        selectedItems.remove(item);
+      }
+    }
   }
 
 }
