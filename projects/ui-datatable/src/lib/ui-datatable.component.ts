@@ -56,6 +56,9 @@ export class UiDatatableComponent implements OnInit, OnChanges, AfterViewInit {
   @Output()
   public dataRequest: EventEmitter<DataTableFilter>;
 
+  @Output()
+  public onRowClick: EventEmitter<IDataTableRender>;
+
   private _orderDir;
   private _isTitlesRendered: boolean;
   private _showCheckboxToSelectRow: boolean;
@@ -64,7 +67,7 @@ export class UiDatatableComponent implements OnInit, OnChanges, AfterViewInit {
   private _currentPage: number;
   private _btnQuantity: number;
   public paginationType: PaginationType;
-  isLoading: boolean;
+  public isLoading: boolean;
 
   constructor() {
     this._orderDir = 'asc';
@@ -79,6 +82,7 @@ export class UiDatatableComponent implements OnInit, OnChanges, AfterViewInit {
     this.searchRequest = new EventEmitter<DataTableFilter>();
     this.dataRequest = new EventEmitter<DataTableFilter>();
     this.isLoading = true;
+    this.onRowClick = new EventEmitter<IDataTableRender>();
   }
 
   public ngOnInit(): void {
@@ -91,8 +95,8 @@ export class UiDatatableComponent implements OnInit, OnChanges, AfterViewInit {
         this.onSearch();
       }
     });
-    this.paginatePrevBtn.addEventListener('onclick', this.prevPage);
-    this.paginateNextBtn.addEventListener('onclick', this.nextPage);
+    this.paginatePrevBtn.addEventListener('click', this.prevPage);
+    this.paginateNextBtn.addEventListener('click', this.nextPage);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -155,19 +159,19 @@ export class UiDatatableComponent implements OnInit, OnChanges, AfterViewInit {
               const th = Element.tag('th') as HTMLTableHeaderCellElement;
               th.style.setProperty('text-align', 'left');
               th.attributes['class'] = "datatable-first-col";
-              
+
               const label = Element.tag('label') as HTMLLabelElement;
               label.classList.add('pure-material-checkbox');
-              
+
               const input = new HTMLInputElement();
               //input.type = "checkbox";
-              input.addEventListener('onclick', this.onSelectAll);
-              const span = Element.tag('span') as HTMLSpanElement;
-              
-              label.append(input)
+              input.addEventListener('click', this.onSelectAll);
+              const span = new HTMLSpanElement();
+
+              label.append(input);
               label.append(span);
               th.append(label);
-              
+
               tableHeaderRow.insertAdjacentElement('beforeend', th);
             }
 
@@ -178,7 +182,7 @@ export class UiDatatableComponent implements OnInit, OnChanges, AfterViewInit {
               th.attributes['class'] = 'dataTableSorting';
               th.textContent = col.title;
 
-              th.addEventListener('onclick', e => {
+              th.addEventListener('click', e => {
                 if (this.enableOrdering === true) {
                   this.tableElement.querySelectorAll('th:not(.datatable-first-col)').forEach((el) => {
                     el.attributes['class'] = 'dataTableSorting';
@@ -196,29 +200,41 @@ export class UiDatatableComponent implements OnInit, OnChanges, AfterViewInit {
                   this.onRequestData();
                 }
               });
-              
+
               tableHeaderRow.insertAdjacentElement('afterend', th);
             });
 
           }
 
-          for (const item in this._data) {
+          this._data.forEach((item: IDataTableRender) => {
             const tableRow: HTMLTableRowElement = tBody.insertRow(-1);
             if (this._showCheckboxToSelectRow) {
               const tdcb = Element.tag('td') as HTMLTableDataCellElement;
               tdcb.attributes['class'] = 'datatable-first-col';
               const label = Element.tag('label') as HTMLLabelElement;
-              label.addEventListener('onclick', (e) => {
+              label.addEventListener('click', (e) => {
                 e.stopPropagation();
               });
               label.classList.add('pure-material-checkbox');
               const input = new HTMLInputElement();
               input.attributes['cbSelect'] = 'true';
-              input.addEventListener('onclick', (ev: MouseEvent) => {
-                this.onsel
+              input.addEventListener('click', (ev: MouseEvent) => {
+                this.onSelect(ev, item);
               });
+              const span = new HTMLSpanElement();
+              span.addEventListener('click', (e: MouseEvent) => {
+                e.stopPropagation();
+              });
+              label.append(input);
+              label.append(span);
+              tdcb.append(label);
+              tableRow.insertAdjacentElement('beforeend', tdcb);
             }
-          }
+            tableRow.addEventListener('click', (e: MouseEvent) => {
+              this.onRowClick.emit(item);
+            });
+          });
+
 
 
         }
